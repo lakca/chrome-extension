@@ -1,0 +1,29 @@
+{
+  "name": "lakca-chrome-extension",
+  "description": "a group of little features",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "permissions": [
+    "<all_urls>",
+    "tabs",
+    "clipboardWrite"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_title": "Actions",
+    "default_popup": "browser_popup.html"
+  },
+  "content_scripts": [{
+    "matches": [
+      "*://*/*"
+    ],
+    "js": [
+      "src/_message.js",
+      "src/common.js",
+      "src/tab_md_link.js"
+    ]
+  }]
+}
