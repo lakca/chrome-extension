@@ -7,12 +7,18 @@ void function() {
   }
 
   function getText(element) {
-    const text = element.innerText
+    let text = element.innerText
     || element.getAttribute('title')
     || element.getAttribute('alt')
     || element.getAttribute('label')
-    return text ? text.trim() : ''
+    text = text ? text.trim() : ''
+    text = '**' + window.location.hostname.split('.', 1)[0]
+      .replace(/^./, x => x.toUpperCase())
+      + '**: ' + text
+    return text
   }
+
+  // document.addEventListener('mouse')
 
   document.addEventListener('click', function (e) {
     if (isCopySelected) {
