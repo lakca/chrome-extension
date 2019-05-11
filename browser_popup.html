@@ -15,7 +15,14 @@
     </style>
   </head>
   <body>
-    <p id="save-douban-link">复制豆瓣（当前页面）链接</p>
-    <p id="copy-tab-link">自选标题，复制（当前页面）链接</p>
+    <p>
+      <a id="copy-tab-link" style="display: inline-block">复制（当前页面）链接</a>
+      <select style="display: inline-block" name="link" id="link-select" value="title">
+        <option value="self">自选</option>
+        <option value="douban">豆瓣</option>
+        <option value="title">title</option>
+        <option value="description">description</option>
+      </select>
+    </p>
   </body>
 </html>

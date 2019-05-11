@@ -20,16 +20,10 @@
 
 function onClick(e) {
   switch (e.target.id) {
-    case 'save-douban-link':
-      InternalRequest.requestTab({
-        action: 'copyDoubanLink',
-        mention: 'copying'
-      })
-      break
     case 'copy-tab-link':
       InternalRequest.requestTab({
         action: 'copyTabLink',
-        mention: 'click to select element which title copy from'
+        type: document.getElementById('link-select').value
       })
       break
     default:
