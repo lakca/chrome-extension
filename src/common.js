@@ -1,9 +1,9 @@
 const mention = function() {
   const eleId = 'extension-' + Date.now()
   const head = document.getElementsByTagName('head')[0]
-  const styleEle = document.createElement('style')
+  const styleBlock = document.createElement('style')
   let mentionTimer
-  styleEle.innerHTML = `
+  styleBlock.innerHTML = `
     #${eleId} {
       background: rgba(22, 122, 22, 1);
       color: white;
@@ -25,8 +25,12 @@ const mention = function() {
       opacity: 1;
       z-index: 99999999999999;
     }
+
+    #${eleId}.warn {
+      background: rgba(122, 122, 22, 1);
+    }
   `
-  head.appendChild(styleEle)
+  head.appendChild(styleBlock)
 
   function objStyle(obj) {
     const items = []
@@ -45,26 +49,30 @@ const mention = function() {
     return document.getElementById(eleId)
   }
 
+  function isString(str) {
+    return typeof str === 'string'
+  }
+
   function showMention(options) {
-    const ele = getTargetDOM()
-    ele.setAttribute('class', 'active')
+    const e = getTargetDOM()
+    e.setAttribute('class', ['active', options.type].join(' '))
     clearTimeout(mentionTimer)
     mentionTimer = setTimeout(function () {
-      ele.setAttribute('class', '')
+      e.setAttribute('class', '')
       options.onClose && options.onClose()
-    }, options.interval || 500)
+    }, options.interval || 1000)
   }
 
   function mention(options) {
-    if (typeof options !== 'object') {
-      options = {message: options}
-    }
-    const ele = getTargetDOM()
-    ele.innerHTML = options.message
-    showMention({
-      interval: options.interval,
-      onClose: options.onClose
-    })
+    isString(options) && (options = {message: options})
+    const e = getTargetDOM()
+    e.innerHTML = options.message
+    showMention(options)
+  }
+
+  mention.warn = function(options) {
+    isString(options) && mention({message: options, type: 'warn'})
+    || mention(Object.assign({type: 'warn'}, options))
   }
 
   internalRequest.onMessage('mention', message => {

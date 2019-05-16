@@ -1,8 +1,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <script src="src/_notification.js"></script>
-    <script src="src/_message.js"></script>
+    <script src="src/message.js"></script>
     <script src="browser_popup.js"></script>
     <style>
       body {
@@ -15,16 +14,16 @@
     </style>
   </head>
   <body>
-    <p>
-      <a id="copy-tab-link" style="display: inline-block">以
-      <select style="display: inline-block" name="link" id="link-select" value="title">
+    <p><a id="copyLink" style="display: inline-block">以
+      <select style="display: inline-block" class="value">
         <option value="self">自选</option>
         <option value="douban">豆瓣</option>
         <option value="title" selected>标题</option>
         <option value="description">描述</option>
       </select>为标题复制链接</a>
     </p>
-    <p><a id="remove-cover">移除Cover</p>
-    <p><a id="remove-baidu-ad">移除百度广告条目</p>
+    <p><a id="unshadow">移除Cover</p>
+    <p><a id="permalink">转换成将相对路径转换成绝对路径</a></p>
+    <p><a id="prune">一键清理页面<input type="checkbox" class="value"></a></p>
   </body>
 </html>

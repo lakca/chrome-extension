@@ -31,19 +31,19 @@ const InternalRequest = function() {
     this.interactiveTabs = new Map()
 
     chrome.runtime.onMessage.addListener((message, sender, sendRes) => {
-      console.log('on', sender, message)
+      console.log('message.js receive message: ', sender, message)
       // this is a async response
-      if (message.asyncId) {
-        const cb = this.asyncResponseListeners.get(message.asyncId)
-        cb && cb(message.content)
-        this.asyncResponseListeners.delete(message.asyncId)
+      if (message._async_id) {
+        const cb = this.asyncResponseListeners.get(message._async_id)
+        cb && cb(message)
+        this.asyncResponseListeners.delete(message._async_id)
         sendRes()
       }
       // normal listener
       else if (message.action) {
         const listener = this.listeners.get(message.action)
         if (listener) {
-          const res = listener(sender, message.content)
+          const res = listener(sender, message)
           console.log('sync response:', res)
           sendRes(res)
         }
@@ -66,8 +66,9 @@ const InternalRequest = function() {
     this.interactiveTabs.delete(tabId)
   }
 
-  InternalRequest.prototype.saveAsyncHandler = function(asyncId, handler, tabId) {
+  InternalRequest.prototype._saveAsyncHandler = function(asyncId, handler, tabId) {
     this.asyncResponseListeners.set(asyncId, handler)
+    if (!tabId) return
     let asyncIdSet
     if (!this.interactiveTabs.has(tabId)) {
       asyncIdSet = new Set()
@@ -79,40 +80,52 @@ const InternalRequest = function() {
   }
 
   InternalRequest.prototype.requestTab = function(action, content, cb) {
-    const that = this
-    return requestTab({
-      action: action,
-      content: content
-    }, cb && function(tab, r) { // sync response
+    if (typeof content === 'function') {
+      cb = content
+      content = {}
+    }
+    return requestTab(Object.assign({}, content, {action}), cb &&
+    ((tab, r) => { // sync response
       console.log('sync receive:', r)
       // async
-      if (r && r.asyncId) {
-        that.saveAsyncHandler(r.asyncId, cb, tab.id)
+      if (r && r._async_id) {
+        this._saveAsyncHandler(r._async_id, cb, tab.id)
+      } else {
+        cb(r)
       }
-      // sync
-      else {
-        cb(r && r.content)
+    }) || noop)
+  }
+
+  InternalRequest.prototype.request = function(action, content, cb) {
+    if (typeof content === 'function') {
+      cb = content
+      content = {}
+    }
+    chrome.runtime.sendMessage(Object.assign({}, content, {action}), cb &&
+    (r => {
+      if (r && r._async_id) {
+        this._saveAsyncHandler(r._async_id, cb)
+      } else {
+        cb(r)
       }
-    } || noop)
+    })
+    || noop)
   }
 
   InternalRequest.prototype.onMessage = function (action, cb) {
-    this.listeners.set(action, function(sender, content) {
-      return {
-        content: cb(content) // raw response from user
-      }
+    this.listeners.set(action, function(sender, message) {
+      return cb(message) // raw response from user
     })
   }
 
   InternalRequest.prototype.onMessageAsync = function (action, cb) {
-    this.listeners.set(action, function (sender, content) {
+    this.listeners.set(action, function (sender, message) {
       const id = uid()
-      cb(content, function(resMessage) {
+      cb(message, function(resMessage) {
         console.log('clicked:', sender, resMessage)
-        const msg = {
-          asyncId: id,
-          content: resMessage
-        }
+        const msg = Object.assign({}, resMessage, {
+          _async_id: id,
+        })
         // async request
         if (sender && sender.tab) {
           chrome.tabs.sendMessage(sender.tab.id, msg)
@@ -122,7 +135,7 @@ const InternalRequest = function() {
       })
       // sync response
       return {
-        asyncId: id
+        _async_id: id
       }
     })
   }

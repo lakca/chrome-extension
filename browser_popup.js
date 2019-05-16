@@ -1,18 +1,40 @@
+const { touchConfig, noop, requests } = chrome.extension.getBackgroundPage();
 
-function onClick(e) {
-  if (!e.target.id) return
-  switch (e.target.id) {
-    case 'copy-tab-link':
-      InternalRequest.requestTab({
-        action: 'copyTabLink',
-        type: document.getElementById('link-select').value
-      })
-      break
-    default:
-      InternalRequest.requestTab({
-        action: e.target.id
-      })
+function touchValue(id, v) {
+  const e = document.getElementById(id)
+  if (!e) return
+  const input = e.querySelector('.value')
+  if (!input)
+    return
+  if (input.type === 'checkbox')
+    key = 'checked'
+  else
+    key = 'value'
+
+  if (arguments.length > 1) {
+    input[key] = v
+  } else {
+    v = input[key]
+    touchConfig(cfg => {
+      cfg[id] = v
+      return cfg
+    })
+    return v
   }
 }
 
-document.addEventListener('click', onClick)
+document.addEventListener('click', function(e) {
+  if (!e.target.id) return
+  InternalRequest.requestTab({
+    action: e.target.id,
+    value: touchValue(e.target.id)
+  })
+})
+
+window.addEventListener('load', function() {
+  touchConfig(cfg => {
+    Object.keys(cfg).forEach(key => {
+      touchValue(key, cfg[key])
+    })
+  }, true)
+})
