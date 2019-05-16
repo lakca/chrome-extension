@@ -14,9 +14,9 @@ const mention = function() {
       font-size: 14px;
       position: fixed;
       z-index: -99999999999999;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, 50px);
+      left: 50px;
+      top: 30px;
+      // transform: translate(-50%, 50px);
       transition: .2s;
       opacity: 0;
     }

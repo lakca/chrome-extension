@@ -1,24 +1,6 @@
-// /* scripts in extension */
-// const listeners = new Map()
-// function addListener(ele, name, cb) {
-//   let a = listeners.get(ele)
-//   if (!a) {
-//     a = new Map()
-//     listeners.set(ele, a)
-//   }
-//   let b = a.get(name)
-//   if (!b) {
-//     b = new Set()
-//     function mainCb (e) {
-//       b.forEach((fn, i) => i && fn(e))
-//     }
-//     b.add(mainCb)
-//     ele.addEventListener(name, mainCb)
-//   }
-//   b.add(cb)
-// }
 
 function onClick(e) {
+  if (!e.target.id) return
   switch (e.target.id) {
     case 'copy-tab-link':
       InternalRequest.requestTab({
@@ -27,6 +9,9 @@ function onClick(e) {
       })
       break
     default:
+      InternalRequest.requestTab({
+        action: e.target.id
+      })
   }
 }
 
