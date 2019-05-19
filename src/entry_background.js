@@ -1,13 +1,6 @@
-
-// chrome.runtime.onInstalled.addListener(function () {
-//   chrome.storage.sync.set({ color: '#3aa757' }, function () {
-//     console.log("The color is green.");
-//   });
-// });
+const { internalRequest } = require('./message')
 
 function noop() {}
-
-const requests = []
 
 internalRequest.onMessageAsync('config', function (message, reply) {
   touchConfig(function(cfg) {
@@ -23,5 +16,7 @@ function touchConfig(cb, noSave) {
     chrome.storage.sync.set({ config: JSON.stringify(r) }, noop)
   })
 }
+/* backgroud window object can be accessed by chrome.extension.getBackgroundPage() */
+window.touchConfig = touchConfig
 
 console.log('loaded')

@@ -1,4 +1,7 @@
-const mention = function() {
+const { internalRequest } = require('./message')
+
+const mention =
+exports.mention = function() {
   const eleId = 'extension-' + Date.now()
   const head = document.getElementsByTagName('head')[0]
   const styleBlock = document.createElement('style')
@@ -82,7 +85,7 @@ const mention = function() {
   return mention
 }()
 
-const setClipboard = function() {
+exports.setClipboard = function() {
   let COPY_TEXT
 
   function onCopy(e) {
@@ -103,4 +106,25 @@ const setClipboard = function() {
   document.addEventListener('copy', onCopy)
 
   return setClipboard
+}()
+
+exports.internalEventTarget = function() {
+  const changeId = 'has_been_injected_by_extension_' + chrome.runtime.id
+  const internalEventTarget = new EventTarget()
+
+  if (window.history[changeId])
+    return
+
+  const pushState = window.history.pushState
+  window.history.pushState = function () {
+    internalEventTarget.dispatchEvent(new CustomEvent('_pushStateCalled', {detail: arguments}))
+    pushState.call(window.history, ...arguments)
+  }
+
+  Object.defineProperty(window.history, changeId, {
+    get() { return true }
+  })
+  console.log('reassign history.pushState: ', changeId)
+
+  return internalEventTarget
 }()

@@ -1,0 +1,31 @@
+{
+  "name": "chrome-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "gulp build",
+    "gulp": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lakca/chrome-extension.git"
+  },
+  "author": "lakca",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lakca/chrome-extension/issues"
+  },
+  "homepage": "https://github.com/lakca/chrome-extension#readme",
+  "devDependencies": {
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "browserify": "^16.2.3",
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-uglify": "^3.0.2",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
+  }
+}

@@ -1,15 +1,16 @@
-const { touchConfig, noop, requests } = chrome.extension.getBackgroundPage();
+const { InternalRequest } = require('./message')
+const { touchConfig } = chrome.extension.getBackgroundPage();
 
 function touchValue(id, v) {
   const e = document.getElementById(id)
-  if (!e) return
+  if (!e)
+    return
   const input = e.querySelector('.value')
   if (!input)
     return
+  let key = 'value'
   if (input.type === 'checkbox')
     key = 'checked'
-  else
-    key = 'value'
 
   if (arguments.length > 1) {
     input[key] = v
