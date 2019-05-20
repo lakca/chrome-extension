@@ -6,6 +6,7 @@ const source = require('vinyl-source-stream')
 const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const babel = require('gulp-babel')
+const sourcemaps = require('gulp-sourcemaps');
 
 function done() {
   const promises = []
@@ -58,11 +59,13 @@ gulp.task('build', function(cb) {
     .on('error', console.error)
     .pipe(source(entry.replace('entry_', '')))
     .pipe(buffer())
+    .pipe(sourcemaps.init())
     .pipe(babel({
       presets: ['@babel/preset-env']
     }))
     .pipe(uglify({compress: true}))
     .on('error', console.error)
+    .pipe(sourcemaps.write())
     .pipe(gulp.dest(dist))
     .on('end', end)
   }

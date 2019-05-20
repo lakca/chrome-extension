@@ -1,19 +1,23 @@
 
 const { internalRequest } = require('./message')
 const { setClipboard, mention, internalEventTarget } = require('./common')
+const prune = require('./prune')
 
 let isCopySelected = false
 const handler = {}
-
-const forEach = Array.prototype.forEach
 
 function Remover() {
   this.n = 0
 }
 
 Remover.prototype.remove = function(node) {
-  node.parentNode.removeChild(node)
-  ++this.n
+  if (!node) return
+  if (node instanceof NodeList) {
+    Array.from(node).forEach(n => this.remove(n))
+  } else {
+    node.parentNode.removeChild(node)
+    ++this.n
+  }
 }
 
 function mdLink(obj) {
@@ -90,7 +94,7 @@ handler.permalink = function() {
   const origin = window.location.origin
   const current = window.location.href
   let n = 0
-  forEach.call(document.querySelectorAll('a'), e => {
+  Array.prototype.forEach.call(document.querySelectorAll('a'), e => {
     let href = e.getAttribute('href')
     if (!href)
       return
@@ -108,40 +112,15 @@ handler.permalink = function() {
 }
 
 handler.prune = function() {
-  const host = window.location.host
   const r = new Remover()
-  if (host === 'juejin.im') {
-    const nodes = [
-      ...document.querySelectorAll('.sidebar-bd-entry'),
-      ...document.querySelectorAll('.index-book-collect'),
-      ...document.querySelectorAll('.main-header-box'),
-      ...document.querySelectorAll('.article-suspended-panel'),
-      ...document.querySelectorAll('.ad-entry-list'),
-      ...document.querySelectorAll('.meiqia-btn'),
-      document.getElementById('comment-box'),
-      document.getElementById('blockbyte-bs-sidebar'),
-    ]
-    nodes.forEach(e => r.remove(e))
+  prune.default(r)
+  const handler = prune[window.location.host]
+  if (handler) {
+    handler(r)
+    mention('共清理' + r.n + '个区块！')
+  } else {
+    mention.warn('未定义清理流程！')
   }
-
-  else if (host === 'www.baidu.com') {
-    const left = document.getElementById('content_left')
-    const right = document.getElementById('content_right')
-    left && forEach.call(right.children, e => {
-      if (e.tagName.toLowerCase() !== 'table')
-        r.remove(e)
-    })
-    right && forEach.call(left.children, e => {
-      if (!/^\s*(\S+\s+)*result(-op)?(\s+\S+)*\s*$/.test(e.className))
-        r.remove(e)
-    })
-    forEach.call(document.querySelectorAll('.ad-block'), e => r.remove(e))
-  }
-
-  else {
-    return mention.warn('未定义清理流程！')
-  }
-  mention('共清理' + r.n + '个区块！')
 }
 
 document.addEventListener('click', function (e) {
@@ -164,41 +143,19 @@ chrome.runtime.onMessage.addListener(function (message) {
 })
 
 console.log(document.readyState)
-
-if ('interactive' === document.readyState) {
-  interactive()
-}
-if ('complete' === document.readyState) {
-  ready()
-  interactive()
-} else {
-  document.addEventListener('readystatechange', event => {
-    if (event.target.readyState === 'complete')
-      ready()
-    else if (event.target.readyState === 'interactive')
-      interactive()
-  });
-}
-
+/*
 internalEventTarget.addEventListener('_pushStateCalled', function() {
   console.log('_pushStateCalled', ...arguments)
   ready()
 })
-
-function ready() {
-  internalRequest.request('config', function(message) {
-    if (message.prune) {
-      handler.prune()
-      mention('Prune!')
-    }
-  })
-}
-
-function interactive() {
+ */
+function _ready() {
   internalRequest.request('config', function (message) {
-    if (message.prune) {
-      handler.prune()
-      mention('Prune!')
-    }
+    if (message.prune) handler.prune()
   })
 }
+const ready = () => setTimeout(_ready, 0)
+
+document.addEventListener('readystatechange', ready);
+window.addEventListener('load', ready)
+ready()

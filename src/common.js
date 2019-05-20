@@ -61,6 +61,7 @@ exports.mention = function() {
     e.setAttribute('class', ['active', options.type].join(' '))
     clearTimeout(mentionTimer)
     mentionTimer = setTimeout(function () {
+      mentionTimer = null
       e.setAttribute('class', '')
       options.onClose && options.onClose()
     }, options.interval || 1000)
@@ -69,7 +70,12 @@ exports.mention = function() {
   function mention(options) {
     isString(options) && (options = {message: options})
     const e = getTargetDOM()
-    e.innerHTML = options.message
+    const message = options.message
+    if (mentionTimer) {
+      e.innerHTML += '<br/>' + message
+    } else {
+      e.innerHTML = message
+    }
     showMention(options)
   }
 
