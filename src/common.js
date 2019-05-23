@@ -3,10 +3,8 @@ const { internalRequest } = require('./message')
 const mention =
 exports.mention = function() {
   const eleId = 'extension-' + Date.now()
-  const head = document.getElementsByTagName('head')[0]
-  const styleBlock = document.createElement('style')
   let mentionTimer
-  styleBlock.innerHTML = `
+  const styles = `
     #${eleId} {
       background: rgba(22, 122, 22, 1);
       color: white;
@@ -19,37 +17,43 @@ exports.mention = function() {
       z-index: -99999999999999;
       left: 50px;
       top: 30px;
-      // transform: translate(-50%, 50px);
       transition: .2s;
       opacity: 0;
     }
-
     #${eleId}.active {
       opacity: 1;
       z-index: 99999999999999;
     }
-
     #${eleId}.warn {
       background: rgba(122, 122, 22, 1);
     }
   `
-  head.appendChild(styleBlock)
 
-  function objStyle(obj) {
-    const items = []
-    for (const name in obj) {
-      items.push(name + ':' + obj[name])
-    }
-    return items.join(';')
+  function createVN() {
+    const div = document.createElement('div')
+    const style = document.createElement('style')
+    const container = document.createElement('div')
+    div.id = eleId
+    style.innerHTML = styles
+    div.appendChild(style)
+    div.appendChild(container)
+    return div
+  }
+  let vn = createVN()
+  if (document.body) {
+    document.body.appendChild(vn)
+  } else {
+    document.addEventListener('readystatechange', () => {
+      if (['interactive', 'complete'].indexOf(document.readyState) > -1) {
+        document.body.appendChild(vn)
+      }
+    })
   }
 
   function getTargetDOM() {
-    if (!document.getElementById(eleId)) {
-      const div = document.createElement('div')
-      div.id = eleId
-      document.body.appendChild(div)
-    }
-    return document.getElementById(eleId)
+    if (document.body && !document.getElementById(eleId))
+      document.body.appendChild(vn = createVN())
+    return vn.children[1]
   }
 
   function isString(str) {
@@ -58,11 +62,11 @@ exports.mention = function() {
 
   function showMention(options) {
     const e = getTargetDOM()
-    e.setAttribute('class', ['active', options.type].join(' '))
+    e.parentNode.setAttribute('class', ['active', options.type].join(' '))
     clearTimeout(mentionTimer)
     mentionTimer = setTimeout(function () {
       mentionTimer = null
-      e.setAttribute('class', '')
+      e.parentNode.setAttribute('class', '')
       options.onClose && options.onClose()
     }, options.interval || 1000)
   }
@@ -117,20 +121,18 @@ exports.setClipboard = function() {
 exports.internalEventTarget = function() {
   const changeId = 'has_been_injected_by_extension_' + chrome.runtime.id
   const internalEventTarget = new EventTarget()
-
-  if (window.history[changeId])
+  if (history[changeId])
     return
 
-  const pushState = window.history.pushState
-  window.history.pushState = function () {
+  const pushState = history.pushState
+  history.pushState = function () {
     internalEventTarget.dispatchEvent(new CustomEvent('_pushStateCalled', {detail: arguments}))
-    pushState.call(window.history, ...arguments)
+    pushState.apply(history, arguments)
   }
 
-  Object.defineProperty(window.history, changeId, {
+  Object.defineProperty(history, changeId, {
     get() { return true }
   })
-  console.log('reassign history.pushState: ', changeId)
-
+  Object.freeze(history)
   return internalEventTarget
 }()

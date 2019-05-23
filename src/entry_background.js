@@ -9,6 +9,17 @@ internalRequest.onMessageAsync('config', function (message, reply) {
   }, !('value' in message))
 })
 
+// repost
+chrome.runtime.onMessage.addListener(function(message) {
+  if (!message || !message.action)
+    return
+  switch (message.to) {
+    case 'content':
+      console.debug('repost to content.')
+      internalRequest.requestTab(message.action, message)
+  }
+})
+
 function touchConfig(cb, noSave) {
   chrome.storage.sync.get(['config'], result => {
     const r = cb(JSON.parse(result.config || '{}'))

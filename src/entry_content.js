@@ -1,24 +1,10 @@
-
-const { internalRequest } = require('./message')
 const { setClipboard, mention, internalEventTarget } = require('./common')
+const { internalRequest } = require('./message')
+const { Remover } = require('./helper')
 const prune = require('./prune')
 
 let isCopySelected = false
 const handler = {}
-
-function Remover() {
-  this.n = 0
-}
-
-Remover.prototype.remove = function(node) {
-  if (!node) return
-  if (node instanceof NodeList) {
-    Array.from(node).forEach(n => this.remove(n))
-  } else {
-    node.parentNode.removeChild(node)
-    ++this.n
-  }
-}
 
 function mdLink(obj) {
   return ['[', obj.title, ']', '(', obj.url, ')'].join('')
@@ -37,6 +23,7 @@ function getText(element) {
 }
 
 handler.copyLink = function(type) {
+  history.kdjf = true
   let title, msg
   switch (type) {
     case 'title':
@@ -114,12 +101,12 @@ handler.permalink = function() {
 handler.prune = function() {
   const r = new Remover()
   prune.default(r)
-  const handler = prune[window.location.host]
-  if (handler) {
-    handler(r)
+  const fn = prune[window.location.host]
+  if (fn) {
+    fn(r)
     mention('共清理' + r.n + '个区块！')
   } else {
-    mention.warn('未定义清理流程！')
+    // mention.warn('未定义清理流程！')
   }
 }
 
@@ -134,21 +121,15 @@ document.addEventListener('click', function (e) {
   }
 })
 
-chrome.runtime.onMessage.addListener(function (message) {
-  console.log('receive runtime message:', message)
+chrome.runtime.onMessage.addListener(function(message, sender, reply) {
+  console.debug('onmessage:', message)
+  reply('received by entry_content.js.')
   if (message.mention)
     mention(message.mention)
   if(handler[message.action])
     handler[message.action](message.value)
 })
 
-console.log(document.readyState)
-/*
-internalEventTarget.addEventListener('_pushStateCalled', function() {
-  console.log('_pushStateCalled', ...arguments)
-  ready()
-})
- */
 function _ready() {
   internalRequest.request('config', function (message) {
     if (message.prune) handler.prune()
@@ -156,6 +137,10 @@ function _ready() {
 }
 const ready = () => setTimeout(_ready, 0)
 
-document.addEventListener('readystatechange', ready);
 window.addEventListener('load', ready)
 ready()
+
+internalEventTarget.addEventListener('_pushStateCalled', function() {
+  console.debug('_pushStateCalled')
+  ready()
+})

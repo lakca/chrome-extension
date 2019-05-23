@@ -7,6 +7,8 @@ const buffer = require('vinyl-buffer')
 const uglify = require('gulp-uglify')
 const babel = require('gulp-babel')
 const sourcemaps = require('gulp-sourcemaps');
+const shakeify = require('common-shakeify')
+const { inspect } = require('util')
 
 function done() {
   const promises = []
@@ -31,7 +33,7 @@ gulp.task('build', function(cb) {
   const dist = path.resolve(__filename, '../dist')
   const src = path.resolve(__filename, '../src')
   const entries = fs.readdirSync(src)
-  .filter(file => /^entry_/.test(file))
+  .filter(file => /^entry/.test(file))
 
   let n = 0
   function end() {
@@ -55,15 +57,23 @@ gulp.task('build', function(cb) {
     browserify({
       entries: [path.resolve(src, entry)]
     })
+    // .plugin(shakeify, {
+    //   onModuleBailout(module, reasons) {
+    //     console.log('shake failed on module: ', inspect(module.bailouts))
+    //   },
+    //   onGlobalBailout(reason) {
+    //     console.log('shake failed')
+    //   }
+    // })
     .bundle()
     .on('error', console.error)
     .pipe(source(entry.replace('entry_', '')))
     .pipe(buffer())
-    .pipe(sourcemaps.init())
     .pipe(babel({
       presets: ['@babel/preset-env']
     }))
-    .pipe(uglify({compress: true}))
+    .pipe(sourcemaps.init())
+    .pipe(uglify())
     .on('error', console.error)
     .pipe(sourcemaps.write())
     .pipe(gulp.dest(dist))

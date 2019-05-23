@@ -22,6 +22,7 @@
     "@babel/core": "^7.4.4",
     "@babel/preset-env": "^7.4.4",
     "browserify": "^16.2.3",
+    "common-shakeify": "^0.6.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-sourcemaps": "^2.6.5",

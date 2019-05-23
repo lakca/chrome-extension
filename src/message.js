@@ -28,20 +28,20 @@ function InternalRequest() {
   this.interactiveTabs = new Map()
 
   chrome.runtime.onMessage.addListener((message, sender, sendRes) => {
-    console.log('message.js receive message: ', sender, message)
+    console.debug('receive message: %o\nfrom %o', message, sender)
     // this is a async response
     if (message._async_id) {
       const cb = this.asyncResponseListeners.get(message._async_id)
       cb && cb(message)
       this.asyncResponseListeners.delete(message._async_id)
-      sendRes()
+      sendRes('received by message.js')
     }
     // normal listener
     else if (message.action) {
       const listener = this.listeners.get(message.action)
       if (listener) {
         const res = listener(sender, message)
-        console.log('sync response:', res)
+        console.debug('sync response to send: %o', res)
         sendRes(res)
       }
     }
@@ -54,7 +54,7 @@ function InternalRequest() {
 }
 
 InternalRequest.prototype._firedOnTabRemoved = function (tabId) {
-  console.log('tab removed:', tabId)
+  console.debug('tab [%s] removed:', tabId)
   if (!this.interactiveTabs.has(tabId))
     return
   const asyncIds = this.interactiveTabs.get(tabId)
@@ -83,7 +83,7 @@ InternalRequest.prototype.requestTab = function(action, content, cb) {
   }
   return requestTab(Object.assign({}, content, {action}), cb &&
   ((tab, r) => { // sync response
-    console.log('sync receive:', r)
+    console.debug('sync response has been received: %o', r)
     // async
     if (r && r._async_id) {
       this._saveAsyncHandler(r._async_id, cb, tab.id)

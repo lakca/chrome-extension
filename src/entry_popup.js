@@ -1,6 +1,6 @@
 const { InternalRequest } = require('./message')
 const { touchConfig } = chrome.extension.getBackgroundPage();
-console.log(chrome.extension.getBackgroundPage())
+
 function touchValue(id, v) {
   const e = document.getElementById(id)
   if (!e)

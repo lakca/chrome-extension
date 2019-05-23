@@ -1,3 +1,6 @@
+const { unicode } = require('./helper')
+
+const baiduResultAdFlag = new RegExp(unicode('广告') + '\\s*$')
 
 exports.default = function(r) {
   /* google ad */
@@ -16,17 +19,26 @@ exports['juejin.im'] = function (r) {
 exports['www.baidu.com'] = function (r) {
   const left = document.getElementById('content_left')
   const right = document.getElementById('content_right')
-  right && [...right.children].forEach(e => {
-    if (e.tagName.toLowerCase() !== 'table')
-      r.remove(e)
+
+  r.isolate(document.getElementById('con-ar'))
+  right && Array.from(right.children).forEach(e => {
+    // not result related
+    if (e.tagName.toLowerCase() === 'table')
+      r.isolate(e)
   })
-  left && [...left.children].forEach(e => {
-    if ([...e.classList].indexOf('result') < -1)
-      r.remove(e)
-    if (e.querySelector('.f13 .tuNLfk'))
-      r.remove(e)
+
+  left && Array.from(left.children).forEach(e => {
+    // not normal results
+    if (!/\bresult(-op)?\b/.test(e.className))
+      return r.remove(e)
+    // unsafe alert from baidu
+    if (e.querySelector('.unsafe_content'))
+      return r.remove(e)
+    // pretend as normal result
+    if (e.querySelector('.f13') && baiduResultAdFlag.test(e.querySelector('.f13').innerText))
+      return r.remove(e)
   })
-  Array.from(document.querySelectorAll('.ad-block')).forEach(e => r.remove(e))
+  // Array.from(document.querySelectorAll('.ad-block')).forEach(e => r.remove(e))
 }
 
 exports['baike.baidu.com'] = function(r) {

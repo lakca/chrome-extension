@@ -6,7 +6,6 @@
   "author": "lakca",
   "permissions": [
     "<all_urls>",
-    "activeTab",
     "clipboardWrite",
     "storage"
   ],
@@ -18,10 +17,16 @@
     "default_title": "Actions",
     "default_popup": "popup.html"
   },
-  "content_scripts": [{
-    "matches": [
-      "*://*/*"
-    ],
-    "js": ["content.js"]
-  }]
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://www.baidu.com/*"],
+      "js": ["baidu.js"],
+      "run_at": "document_start"
+    }
+  ]
 }
