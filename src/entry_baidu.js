@@ -1,4 +1,3 @@
-
 const { createTaskPool } = require('./helper')
 
 let hasListenInserted, wrapper

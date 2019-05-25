@@ -69,13 +69,15 @@ gulp.task('build', function(cb) {
     .on('error', console.error)
     .pipe(source(entry.replace('entry_', '')))
     .pipe(buffer())
-    .pipe(babel({
-      presets: ['@babel/preset-env']
-    }))
-    .pipe(sourcemaps.init())
-    .pipe(uglify())
-    .on('error', console.error)
-    .pipe(sourcemaps.write())
+    // .pipe(babel({
+    //   presets: ['@babel/preset-env'],
+    //   compact: false,
+    //   ast: true
+    // }))
+    // .pipe(sourcemaps.init())
+    // .pipe(uglify())
+    // .on('error', console.error)
+    // .pipe(sourcemaps.write())
     .pipe(gulp.dest(dist))
     .on('end', end)
   }

@@ -1,4 +1,3 @@
-const { InternalRequest } = require('./message')
 const { touchConfig } = chrome.extension.getBackgroundPage();
 
 function touchValue(id, v) {
@@ -26,9 +25,12 @@ function touchValue(id, v) {
 
 document.addEventListener('click', function(e) {
   if (!e.target.id) return
-  InternalRequest.requestTab({
-    action: e.target.id,
-    value: touchValue(e.target.id)
+  chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+    if (!tabs.length) return
+    chrome.tabs.sendMessage(tabs[0].id, {
+      action: e.target.id,
+      value: touchValue(e.target.id)
+    })
   })
 })
 
@@ -37,5 +39,5 @@ window.addEventListener('load', function() {
     Object.keys(cfg).forEach(key => {
       touchValue(key, cfg[key])
     })
-  }, true)
+  })
 })

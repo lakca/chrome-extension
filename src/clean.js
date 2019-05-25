@@ -1,4 +1,9 @@
+module.exports = clean
+
+const { Remover } = require('./helper')
+
 function forEach(arrayLike, ...args) {
+  if (!arrayLike) console.trace(arrayLike)
   Array.prototype.forEach.call(arrayLike, ...args)
 }
 
@@ -6,25 +11,26 @@ function isArrayLike(data) {
   return 'length' in data
 }
 
-function remove(node) {
-  if (node instanceof NodeList || node instanceof Array) {
-    for (const n of node)
-      node.parentNode.removeChild(n)
-  } else {
-    node.parentNode.removeChild(node)
-  }
-}
-
 function isZero(unit) {
   return parseFloat(unit) <= 0
 }
 
+function isFunctionalNode(node) {
+  return ['STYLE', 'SCRIPT'].indexOf(node.tagName) > -1
+}
+
 function isVisible(element, style) {
   style = style || window.getComputedStyle(element)
+  // none display
   if (style.display === 'none')
     return false
+  // hidden
   if (style.visibility === 'hidden')
     return false
+  // img/background
+  if (element.tagName === 'IMG' || style.backgroundImage !== 'none')
+    return true
+  // no size
   if (isZero(style.width) || isZero(style.height))
     return false
   // no readable content
@@ -33,47 +39,58 @@ function isVisible(element, style) {
   return true
 }
 
+function cleanDeep(element, options) {
+  const r = options.r || new Remover()
+  forEach(element.children, child => {
+    if (isFunctionalNode(child)) return
+    const style = window.getComputedStyle(child)
+    if (!isVisible(child, style)) {
+      return r.remove(child)
+    } else {
+      return cleanDeep(child, options)
+    }
+  })
+}
+
 function clean(options) {
+  const r = new Remover()
+  // const vdoc = new DOMParser().parseFromString(document.documentElement.innerHTML)
+  // empty style
+  forEach(document.styleSheets, e => {
+    if (!e.href && !e.rules.length)
+      r.remove(e.ownerNode)
+  })
 
-  if (options.script)
-    remove(document.scripts)
+  if (options.script) {
+    r.remove(document.scripts)
+  }
 
-  if (options.iframe)
-    remove(document.querySelectorAll('iframe'))
+  if (options.iframe) {
+    r.remove(document.querySelectorAll('iframe'))
+  }
 
-  if (options.meta)
-    remove(document.head.meta)
+  if (options.meta) {
+    r.remove(document.head.meta)
+  }
 
   if (options.emptyFunctionalElement) {
     // empty script
     if (!options.script) {
       forEach(document.scripts, e => {
         if (!e.innerHTML.trim())
-          remove(e)
-      })
-    }
-    // empty style
-    if (!options.style) {
-      forEach(document.styleSheets, e => {
-        if (!e.href && !e.rules.length)
-          remove(e.ownerNode)
+          r.remove(e)
       })
     }
   }
 
-  const body = document.body
-  forEach(body.children, element => {
-    const style = window.getComputedStyle(child)
-    if (options.invisible) {
-      if (!isVisible(element, style)) {
-        return remove(element)
-      }
-    }
-  })
-}
-
-function cleanStyle() {
-  document.styleSheets
+  if (options.invisible) {
+    cleanDeep(document.body, {
+      r,
+      invisible: true
+    })
+  }
+  // document.documentElement.innerHTML = vdoc.innerHTML
+  return r.n
 }
 
 function printObjectDoc(obj) {

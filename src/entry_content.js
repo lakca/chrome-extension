@@ -1,7 +1,8 @@
-const { setClipboard, mention, internalEventTarget } = require('./common')
-const { internalRequest } = require('./message')
+const { setClipboard } = require('./common')
 const { Remover } = require('./helper')
+const notify = require('./notify')
 const prune = require('./prune')
+const clean = require('./clean')
 
 let isCopySelected = false
 const handler = {}
@@ -23,7 +24,6 @@ function getText(element) {
 }
 
 handler.copyLink = function(type) {
-  history.kdjf = true
   let title, msg
   switch (type) {
     case 'title':
@@ -56,7 +56,7 @@ handler.copyLink = function(type) {
     title: title,
     url: window.location.href
   }))
-  mention(msg)
+  notify(msg)
 }
 
 function unshadowQuora() {
@@ -74,7 +74,7 @@ function unshadowQuora() {
 handler.unshadow = function() {
   if (window.location.host === 'www.quora.com')
     unshadowQuora()
-  mention('Cover移除成功')
+  notify('Cover移除成功')
 }
 
 handler.permalink = function() {
@@ -95,7 +95,7 @@ handler.permalink = function() {
       return e.setAttribute('href', origin + href)
     return e.setAttribute('href', current + href)
   })
-  mention('共转换' + n + '个链接！')
+  notify('共转换' + n + '个链接！')
 }
 
 handler.prune = function() {
@@ -104,10 +104,20 @@ handler.prune = function() {
   const fn = prune[window.location.host]
   if (fn) {
     fn(r)
-    mention('共清理' + r.n + '个区块！')
+    notify('共清理' + r.n + '个区块！')
   } else {
-    // mention.warn('未定义清理流程！')
+    // notify.warn('未定义清理流程！')
   }
+}
+
+handler.clean = function () {
+  notify('cleaned ' + clean({
+    script: true,
+    meta: true,
+    iframe: true,
+    emptyFunctionalElement: true,
+    invisible: true
+  }))
 }
 
 document.addEventListener('click', function (e) {
@@ -124,23 +134,18 @@ document.addEventListener('click', function (e) {
 chrome.runtime.onMessage.addListener(function(message, sender, reply) {
   console.debug('onmessage:', message)
   reply('received by entry_content.js.')
-  if (message.mention)
-    mention(message.mention)
   if(handler[message.action])
     handler[message.action](message.value)
 })
 
 function _ready() {
-  internalRequest.request('config', function (message) {
-    if (message.prune) handler.prune()
+  chrome.runtime.sendMessage({
+    action: 'config'
+  }, res => {
+    if (res.prune) handler.prune()
   })
 }
 const ready = () => setTimeout(_ready, 0)
 
 window.addEventListener('load', ready)
 ready()
-
-internalEventTarget.addEventListener('_pushStateCalled', function() {
-  console.debug('_pushStateCalled')
-  ready()
-})

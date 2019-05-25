@@ -12,9 +12,11 @@ function Remover() {
 
 Remover.prototype.remove = function (node) {
   if (!node) return
-  if (node instanceof NodeList) {
+  if ('length' in node) {
     Array.from(node).forEach(n => this.remove(n))
   } else {
+    if (!node.parentNode)
+      return console.debug('%o has no parent node.', node)
     node.parentNode.removeChild(node)
     ++this.n
   }
